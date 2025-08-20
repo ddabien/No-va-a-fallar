@@ -2,13 +2,27 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleIdentifier</key>
-    <string>com.drhugodabien.SpaceInvadersSaver</string>
-    <key>CFBundleName</key>
-    <string>SpaceInvadersSaver</string>
-    <key>CFBundlePackageType</key>
-    <string>BNDL</string>
-    <key>NSPrincipalClass</key>
-    <string>SpaceInvadersSaverView</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleDisplayName</key>
+  <string>SpaceInvadersSaver</string>
+  <key>CFBundleExecutable</key>
+  <string>SpaceInvadersSaver</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.drhugodabien.SpaceInvadersSaver</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>SpaceInvadersSaver</string>
+  <key>CFBundlePackageType</key>
+  <string>BNDL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+
+  <!-- Clase principal del ScreenSaver -->
+  <key>NSPrincipalClass</key>
+  <string>SpaceInvadersSaverView</string>
 </dict>
 </plist>
