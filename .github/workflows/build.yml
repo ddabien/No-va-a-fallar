@@ -1,0 +1,92 @@
+name: build-and-release
+
+on:
+  push:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Runner info + árbol
+        run: |
+          set -euxo pipefail
+          sw_vers
+          xcodebuild -version
+          xcode-select -p
+          echo "Top-level:"
+          ls -la
+          echo "Árbol (4 niveles):"
+          find . -maxdepth 4 -print
+
+      - name: Instalar XcodeGen
+        run: |
+          set -euxo pipefail
+          brew update
+          brew install xcodegen
+          xcodegen --version
+
+      - name: Generar proyecto Xcode (via XcodeGen)
+        run: |
+          set -euxo pipefail
+          xcodegen generate
+          ls -la
+          test -d SpaceInvadersSaver.xcodeproj
+          xcodebuild -list -project SpaceInvadersSaver.xcodeproj
+
+      - name: Build .saver (Release)
+        run: |
+          set -euxo pipefail
+          xcodebuild \
+            -project SpaceInvadersSaver.xcodeproj \
+            -scheme SpaceInvadersSaver \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build | tee xcodebuild.log
+          echo "Productos de build:"
+          ls -la build/Build/Products/Release || true
+
+      - name: Empaquetar (.saver → .zip)
+        run: |
+          set -euxo pipefail
+          cd build/Build/Products/Release
+          if [ ! -d SpaceInvadersSaver.saver ]; then
+            echo "ERROR: No se generó SpaceInvadersSaver.saver"
+            echo "Revisá xcodebuild.log en los artifacts."
+            exit 2
+          fi
+          zip -r SpaceInvadersSaver.zip SpaceInvadersSaver.saver
+          mv SpaceInvadersSaver.zip $GITHUB_WORKSPACE/
+
+      - name: Subir artifact (.saver)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpaceInvadersSaver
+          path: SpaceInvadersSaver.zip
+          if-no-files-found: warn
+
+      - name: Subir logs de build (si existen)
+        if: always()
+        run: |
+          set -euxo pipefail
+          mkdir -p logs || true
+          [ -f xcodebuild.log ] && cp xcodebuild.log logs/ || true
+          [ -d build/Logs ] && cp -R build/Logs logs/ || true
+          [ "$(ls -A logs || true)" ] && zip -r build-logs.zip logs || true
+
+      - name: Artifact logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build-logs.zip
+          if-no-files-found: ignore
