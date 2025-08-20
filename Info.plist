@@ -21,7 +21,7 @@
   <key>CFBundleVersion</key>
   <string>1</string>
 
-  <!-- Clase principal del ScreenSaver -->
+  <!-- Tiene que coincidir con @objc(SpaceInvadersSaverView) -->
   <key>NSPrincipalClass</key>
   <string>SpaceInvadersSaverView</string>
 </dict>
