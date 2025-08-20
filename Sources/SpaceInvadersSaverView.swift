@@ -1,6 +1,7 @@
 import ScreenSaver
 import WebKit
 
+@objc(SpaceInvadersSaverView) // <-- fuerza el nombre ObjC que busca Info.plist
 public class SpaceInvadersSaverView: ScreenSaverView {
     private var webView: WKWebView!
 
@@ -21,6 +22,14 @@ public class SpaceInvadersSaverView: ScreenSaverView {
 
         if let (url, base) = Self.indexURL() {
             _ = webView.loadFileURL(url, allowingReadAccessTo: base)
+        } else {
+            let html = """
+            <!doctype html><meta charset="utf-8">
+            <title>Falta index.html</title>
+            <style>html,body{height:100%;margin:0;background:#000;color:#fff;display:grid;place-items:center;font-family:-apple-system,Helvetica,Arial}</style>
+            <div>Falta <code>Resources/web/index.html</code> en el bundle.</div>
+            """
+            webView.loadHTMLString(html, baseURL: nil)
         }
     }
 
@@ -33,8 +42,15 @@ public class SpaceInvadersSaverView: ScreenSaverView {
 
     private static func indexURL() -> (URL, URL)? {
         let bundle = Bundle(for: self)
+        // Primero intenta Resources/web/index.html
         if let url = bundle.url(forResource: "index", withExtension: "html", subdirectory: "web") {
             return (url, url.deletingLastPathComponent())
+        }
+        // Fallback: busca cualquier index.html en el bundle
+        if let urls = bundle.urls(forResourcesWithExtension: "html", subdirectory: nil) {
+            if let idx = urls.first(where: { $0.lastPathComponent.lowercased() == "index.html" }) {
+                return (idx, idx.deletingLastPathComponent())
+            }
         }
         return nil
     }
