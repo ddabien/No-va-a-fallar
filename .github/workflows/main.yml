@@ -2,38 +2,95 @@ name: build-and-release
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Generate Xcode project
-        run: xcodegen generate
-
-      - name: Build saver
+      - name: Runner info + árbol de archivos
         run: |
-          xcodebuild -project SpaceInvadersSaver.xcodeproj \
-                     -scheme SpaceInvadersSaver \
-                     -configuration Release \
-                     -derivedDataPath build \
-                     CODE_SIGNING_ALLOWED=NO \
-                     CODE_SIGNING_REQUIRED=NO \
-                     CODE_SIGN_IDENTITY="" build
+          set -euxo pipefail
+          sw_vers
+          xcodebuild -version
+          xcode-select -p
+          echo "PWD: $(pwd)"
+          echo "Árbol (top):"
+          ls -la
+          echo "Árbol recursivo:"
+          find . -maxdepth 4 -print
 
-      - name: Pack artifact
+          # Avisos (no fallan el job):
+          test -f project.yml || echo "WARNING: falta project.yml"
+          test -f Info.plist || echo "WARNING: falta Info.plist"
+          test -f Sources/SpaceInvadersSaverView.swift || echo "WARNING: falta Sources/SpaceInvadersSaverView.swift"
+          test -f Resources/web/index.html || echo "WARNING: falta Resources/web/index.html (ojo con carpetas intermedias del ZIP)"
+
+      - name: Generar Xcode project (XcodeGen action)
+        uses: xavierLowmiller/xcodegen-action@v1
+        with:
+          args: generate
+
+      - name: Verificar proyecto
         run: |
+          set -euxo pipefail
+          ls -la
+          test -d SpaceInvadersSaver.xcodeproj
+          xcodebuild -list -project SpaceInvadersSaver.xcodeproj
+
+      - name: Build .saver (Release)
+        run: |
+          set -euxo pipefail
+          xcodebuild \
+            -project SpaceInvadersSaver.xcodeproj \
+            -scheme SpaceInvadersSaver \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build | tee xcodebuild.log
+          echo "Productos de build:"
+          ls -la build/Build/Products/Release || true
+
+      - name: Empaquetar (.saver → .zip)
+        run: |
+          set -euxo pipefail
           cd build/Build/Products/Release
+          if [ ! -d SpaceInvadersSaver.saver ]; then
+            echo "ERROR: No se generó SpaceInvadersSaver.saver"
+            exit 2
+          fi
           zip -r SpaceInvadersSaver.zip SpaceInvadersSaver.saver
           mv SpaceInvadersSaver.zip $GITHUB_WORKSPACE/
 
-      - uses: actions/upload-artifact@v4
+      - name: Subir artifact (.saver)
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: SpaceInvadersSaver
           path: SpaceInvadersSaver.zip
+          if-no-files-found: warn
+
+      - name: Subir logs de build (si existen)
+        if: always()
+        run: |
+          set -euxo pipefail
+          mkdir -p logs || true
+          [ -f xcodebuild.log ] && cp xcodebuild.log logs/ || true
+          [ -d build/Logs ] && cp -R build/Logs logs/ || true
+          [ "$(ls -A logs || true)" ] && zip -r build-logs.zip logs || true
+        shell: bash
+
+      - name: Artifact logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build-logs.zip
+          if-no-files-found: ignore
