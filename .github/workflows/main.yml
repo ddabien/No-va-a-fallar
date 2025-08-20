@@ -1,0 +1,39 @@
+name: build-and-release
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build saver
+        run: |
+          xcodebuild -project SpaceInvadersSaver.xcodeproj \
+                     -scheme SpaceInvadersSaver \
+                     -configuration Release \
+                     -derivedDataPath build \
+                     CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGN_IDENTITY="" build
+
+      - name: Pack artifact
+        run: |
+          cd build/Build/Products/Release
+          zip -r SpaceInvadersSaver.zip SpaceInvadersSaver.saver
+          mv SpaceInvadersSaver.zip $GITHUB_WORKSPACE/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpaceInvadersSaver
+          path: SpaceInvadersSaver.zip
