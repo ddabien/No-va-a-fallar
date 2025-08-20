@@ -1,18 +1,40 @@
 name: SpaceInvadersSaver
 
+options:
+  minimumXcodeGenVersion: 2.38.0
+
 targets:
   SpaceInvadersSaver:
     type: bundle
     platform: macOS
+    deploymentTarget: "14.0"     # Sonoma
     settings:
+      PRODUCT_NAME: SpaceInvadersSaver
       PRODUCT_BUNDLE_IDENTIFIER: com.drhugodabien.SpaceInvadersSaver
       WRAPPER_EXTENSION: saver
+      INFOPLIST_FILE: Info.plist
+      CODE_SIGNING_ALLOWED: NO
+      CODE_SIGNING_REQUIRED: NO
+      CODE_SIGN_IDENTITY: ""
+      SWIFT_VERSION: 5.0
+      MACOSX_DEPLOYMENT_TARGET: 14.0
+      CLANG_ENABLE_OBJC_ARC: YES
+      LD_RUNPATH_SEARCH_PATHS: "@loader_path/../Frameworks"
     sources:
       - path: Sources
       - path: Resources
         type: resources
+    entitlements: null
     dependencies:
-      - framework: ScreenSaver.framework
-      - framework: WebKit.framework
-    info:
-      path: Info.plist
+      - sdk: ScreenSaver.framework
+      - sdk: WebKit.framework
+
+schemes:
+  SpaceInvadersSaver:
+    build:
+      targets:
+        SpaceInvadersSaver: all
+    run:
+      config: Release
+    archive:
+      config: Release
