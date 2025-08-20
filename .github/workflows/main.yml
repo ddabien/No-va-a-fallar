@@ -18,16 +18,10 @@ jobs:
           sw_vers
           xcodebuild -version
           xcode-select -p
-          echo "PWD: $(pwd)"
           echo "Top-level:"
           ls -la
           echo "Árbol (4 niveles):"
           find . -maxdepth 4 -print
-          # Avisos (no rompen el build):
-          test -f project.yml || echo "WARNING: falta project.yml"
-          test -f Info.plist || echo "WARNING: falta Info.plist"
-          test -f Sources/SpaceInvadersSaverView.swift || echo "WARNING: falta Sources/SpaceInvadersSaverView.swift"
-          test -f Resources/web/index.html || echo "WARNING: falta Resources/web/index.html (ojo con carpetas intermedias)"
 
       - name: Instalar XcodeGen
         run: |
@@ -36,7 +30,7 @@ jobs:
           brew install xcodegen
           xcodegen --version
 
-      - name: Generar Xcode project
+      - name: Generar proyecto Xcode (via XcodeGen)
         run: |
           set -euxo pipefail
           xcodegen generate
@@ -66,6 +60,7 @@ jobs:
           cd build/Build/Products/Release
           if [ ! -d SpaceInvadersSaver.saver ]; then
             echo "ERROR: No se generó SpaceInvadersSaver.saver"
+            echo "Revisá xcodebuild.log en los artifacts."
             exit 2
           fi
           zip -r SpaceInvadersSaver.zip SpaceInvadersSaver.saver
