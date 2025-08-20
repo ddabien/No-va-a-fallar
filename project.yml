@@ -2,6 +2,7 @@ name: SpaceInvadersSaver
 
 options:
   minimumXcodeGenVersion: 2.38.0
+  xcodeVersion: "15.4"   # 👈 Fuerza formato compatible con el runner (Xcode 15.4)
 
 targets:
   SpaceInvadersSaver:
