@@ -12,32 +12,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Runner info + árbol de archivos
+      - name: Runner info + árbol
         run: |
           set -euxo pipefail
           sw_vers
           xcodebuild -version
           xcode-select -p
           echo "PWD: $(pwd)"
-          echo "Árbol (top):"
+          echo "Top-level:"
           ls -la
-          echo "Árbol recursivo:"
+          echo "Árbol (4 niveles):"
           find . -maxdepth 4 -print
-
-          # Avisos (no fallan el job):
+          # Avisos (no rompen el build):
           test -f project.yml || echo "WARNING: falta project.yml"
           test -f Info.plist || echo "WARNING: falta Info.plist"
           test -f Sources/SpaceInvadersSaverView.swift || echo "WARNING: falta Sources/SpaceInvadersSaverView.swift"
-          test -f Resources/web/index.html || echo "WARNING: falta Resources/web/index.html (ojo con carpetas intermedias del ZIP)"
+          test -f Resources/web/index.html || echo "WARNING: falta Resources/web/index.html (ojo con carpetas intermedias)"
 
-      - name: Generar Xcode project (XcodeGen action)
-        uses: xavierLowmiller/xcodegen-action@v1
-        with:
-          args: generate
-
-      - name: Verificar proyecto
+      - name: Instalar XcodeGen
         run: |
           set -euxo pipefail
+          brew update
+          brew install xcodegen
+          xcodegen --version
+
+      - name: Generar Xcode project
+        run: |
+          set -euxo pipefail
+          xcodegen generate
           ls -la
           test -d SpaceInvadersSaver.xcodeproj
           xcodebuild -list -project SpaceInvadersSaver.xcodeproj
@@ -85,7 +87,6 @@ jobs:
           [ -f xcodebuild.log ] && cp xcodebuild.log logs/ || true
           [ -d build/Logs ] && cp -R build/Logs logs/ || true
           [ "$(ls -A logs || true)" ] && zip -r build-logs.zip logs || true
-        shell: bash
 
       - name: Artifact logs
         if: always()
