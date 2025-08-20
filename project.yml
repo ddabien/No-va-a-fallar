@@ -7,7 +7,7 @@ targets:
   SpaceInvadersSaver:
     type: bundle
     platform: macOS
-    deploymentTarget: "14.0"     # Sonoma
+    deploymentTarget: "14.0"    # Sonoma
     settings:
       PRODUCT_NAME: SpaceInvadersSaver
       PRODUCT_BUNDLE_IDENTIFIER: com.drhugodabien.SpaceInvadersSaver
@@ -24,7 +24,6 @@ targets:
       - path: Sources
       - path: Resources
         type: resources
-    entitlements: null
     dependencies:
       - sdk: ScreenSaver.framework
       - sdk: WebKit.framework
